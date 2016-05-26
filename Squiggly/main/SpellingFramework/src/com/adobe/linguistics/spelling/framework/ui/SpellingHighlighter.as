@@ -79,8 +79,54 @@ package com.adobe.linguistics.spelling.framework.ui
 			if ( firstLine != lastLine ) {
 				return;
 			}else {
+				// If it chose the same character as the first and last, abort
+				if(firstCharIndex==lastCharIndex) {
+					return;
+				}
+
 				var rect1:Rectangle = _textField.getCharBoundaries(firstCharIndex);
 				var rect2:Rectangle = _textField.getCharBoundaries(lastCharIndex);
+
+				// Make sure we have at least one valid rectangle
+				if(rect1==null && rect2==null) {
+					return;
+				}
+				
+				if(rect1==null) {
+					var rect1before:Rectangle = null;
+					var rect1after:Rectangle = _textField.getCharBoundaries(firstCharIndex+1);
+
+					if(firstCharIndex>1) {
+						rect1before = _textField.getCharBoundaries(firstCharIndex-1);
+					}
+
+					// If the character before it is good, then this is the best option
+					if(rect1before && rect1before.y==rect2.y) {
+						rect1 = rect1before;
+					} else if(rect1after && rect1after.y==rect2.y) {
+						rect1 = rect1after;
+					} else {
+						return;
+					}
+				} else if(rect2==null) {
+					var rect2before:Rectangle = _textField.getCharBoundaries(lastCharIndex-1);
+					var rect2after:Rectangle = _textField.getCharBoundaries(lastCharIndex+1);
+
+					// If the rect after is good and on the same line, this might be the better option
+					if(rect2after && rect2after.y==rect1.y) {
+						rect2 = rect2after;
+					} else if(rect2before && rect2before.y==rect1.y) {
+						rect2 = rect2before;
+					} else {
+						return;
+					}
+				}
+				
+				// If the rectangles are still null for some reason at this point, just give up
+				if(rect1==null || rect2==null) {
+					return;
+				}
+
 				var x:Number = rect1.x+_offsetPoint.x - _textField.scrollH;
 				var y:Number = rect1.y + rect1.height + 2;
 				var width:Number = rect2.x+rect2.width-rect1.x;
